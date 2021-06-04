@@ -21,6 +21,9 @@ class ToyModelCalculator(calc.Calculator):
         """
         calc.Calculator.__init__(self, *args, **kwargs)
         
+        # Setup what properties the calculator can load
+        self.implemented_properties = ["energy", "forces"]
+        
         # Parameters of the Morse potential in ATOMIC UNITS
         
         # The rigid energy shift in HARTREE
@@ -37,15 +40,15 @@ class ToyModelCalculator(calc.Calculator):
         
         # Crystal field in HARTREE /BOHR
         self.E = np.linspace(0, 0.06, 15)[1]
-        
-        # Results
-        self.results = None
     
     def calculate(self, atoms = None,  *args, **kwargs):
         """
-        COMPUTES ENERGY AND FORCES IN RYDBERG and RYDBERG/ ANGSTROM
-        ===========================================================
+        COMPUTES ENERGY AND FORCES IN eV and eV/ ANGSTROM
+        =================================================
         
+        Returns:
+        -------
+            -self.results: a dict with energy and forces.
         """
         calc.Calculator.calculate(self, atoms, *args, **kwargs)
         
@@ -60,20 +63,20 @@ class ToyModelCalculator(calc.Calculator):
         # Get the radial distance
         r         = np.sqrt(rel_coord.dot(rel_coord))
         
-        # Get the energy
-        energy = H2_shift + H2_D * (1. - np.exp(-self.H2_a * (r - self.H2_re)))**2 + E * (coords[0,0] - coords[1,0])
+        # Get the energy in HARTREE
+        energy = self.H2_shift + self.H2_D * (1. - np.exp(-self.H2_a * (r - self.H2_re)))**2 + self.E * (coords[0,0] - coords[1,0])
         
         # Derivative with respect the radial distance
-        diff_V_r = 2. * H2_a * H2_D * (1. - np.exp(-self.H2_a * (r - self.H2_re))) * np.exp(-self.H2_a * (r - self.H2_re))
+        diff_V_r = 2. * self.H2_a * self.H2_D * (1. - np.exp(-self.H2_a * (r - self.H2_re))) * np.exp(-self.H2_a * (r - self.H2_re))
         
-        # Get the forces for the first particle
+        # Get the forces for the first particle in HARTREE /BOHR
         force[0,:]  = - diff_V_r * (coords[0,:] - coords[1,:]) /r
+        force[0,0] += - self.E
         
-        force[0,0] += - E
-
+        # Get the forces for the second particle in HARTREE /BOHR
         force[1,:] = - force[0,:]
         
-        # Convert from HARTREE HARTREE /BOHRE in -> RYDBERG and RYDBERG / ANGSTROM
-        self.results = {"energy": energy * 2., "forces": force * 2. / units.BOHR_TO_ANGSTROM}
+        # Convert from HARTREE, HARTREE /BOHR in -> eV, eV /ANGSTROM
+        self.results = {"energy": energy * 2. * units.RY_TO_EV, "forces": force * 2. * units.RY_TO_EV /units.BOHR_TO_ANGSTROM}
     
         return self.results
