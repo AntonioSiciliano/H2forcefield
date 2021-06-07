@@ -76,7 +76,7 @@ class ToyModelCalculator(calc.Calculator):
         # Get the forces for the second particle in HARTREE /BOHR
         force[1,:] = - force[0,:]
         
-        # Convert from HARTREE, HARTREE /BOHR in -> eV, eV /ANGSTROM
+        # CONVERT from HARTREE, HARTREE /BOHR in -> eV, eV /ANGSTROM
         self.results = {"energy": energy * 2. * units.RY_TO_EV, "forces": force * 2. * units.RY_TO_EV /units.BOHR_TO_ANGSTROM}
     
         return self.results

@@ -55,11 +55,12 @@ class ToyModelCalculator(calc.Calculator):
         # Energy and force in HARTREE and HARTREE/BOHR
         energy, force = 0., np.zeros((2, 3), dtype = np.double)
 
-        # Position in ANGSTROM converted in BOHR
+        # Position in ANGSTROM converted in BOHR, np.array with shape = (2, 3)
         coords = atoms.get_positions() * units.A_TO_BOHR
 
         # Get the relative coordinate
         rel_coord =  (coords[0,:] - coords[1,:])
+        
         # Get the radial distance
         r         = np.sqrt(rel_coord.dot(rel_coord))
         
