@@ -40,6 +40,23 @@ class ToyModelCalculator(calc.Calculator):
         
         # Crystal field in HARTREE /BOHR
         self.E = np.linspace(0, 0.06, 15)[1]
+        
+    def minimum(self):
+        """
+        Get the minimum of the full potential since this can be done analitycally
+
+        Returns:
+        -------
+            -Vmin: double, the minimum of the potential in HARTREE
+        """
+
+        expmin = 0.5 * (1. + np.sqrt(1 + 2. * self.E * np.cos(np.pi)/(self.H2_D * self.H2_a)))
+
+        rmin = self.H2_re - np.log(expmin) / self.H2_a
+
+        Vmin = self.E * rmin * np.cos(np.pi) + self.H2_shift + self.H2_D * (1 - expmin)**2
+    
+        return Vmin
     
     def calculate(self, atoms = None,  *args, **kwargs):
         """
@@ -64,8 +81,8 @@ class ToyModelCalculator(calc.Calculator):
         # Get the radial distance
         r         = np.sqrt(rel_coord.dot(rel_coord))
         
-        # Get the energy in HARTREE
-        energy = self.H2_shift + self.H2_D * (1. - np.exp(-self.H2_a * (r - self.H2_re)))**2 + self.E * (coords[0,0] - coords[1,0])
+        # Get the energy in HARTREE subtrating the minimum of the Morse + crystal field potential
+        energy = self.H2_shift + self.H2_D * (1. - np.exp(-self.H2_a * (r - self.H2_re)))**2 + self.E * (coords[0,0] - coords[1,0]) - self.minimum()
         
         # Derivative with respect the radial distance
         diff_V_r = 2. * self.H2_a * self.H2_D * (1. - np.exp(-self.H2_a * (r - self.H2_re))) * np.exp(-self.H2_a * (r - self.H2_re))
