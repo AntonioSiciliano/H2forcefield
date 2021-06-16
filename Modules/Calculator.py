@@ -39,7 +39,7 @@ class ToyModelCalculator(calc.Calculator):
         self.H2_re    =  1.21606669
         
         # Crystal field in HARTREE /BOHR
-        self.E = np.linspace(0, 0.06, 15)[1]
+        self.E = np.linspace(0, 0.06, 15)[0]
         
     def minimum(self):
         """
