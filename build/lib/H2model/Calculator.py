@@ -24,6 +24,8 @@ class ToyModelCalculator(calc.Calculator):
         # Setup what properties the calculator can load
         self.implemented_properties = ["energy", "forces"]
         
+        self.model = 'rotating'
+        
         # Parameters of the Morse potential in ATOMIC UNITS
         
         # The rigid energy shift in HARTREE
@@ -38,8 +40,10 @@ class ToyModelCalculator(calc.Calculator):
         # The equilibrium bond lenght  in BOHR
         self.H2_re    =  1.21606669
         
+        self.k_harm = 2 * (self.H2_a**2) * self.H2_D
+        
         # Crystal field in HARTREE /BOHR
-        self.E = np.linspace(0, 0.06, 15)[0]
+        self.E = np.linspace(0, 0.06, 15)[1]
         
     def minimum(self):
         """
@@ -58,6 +62,7 @@ class ToyModelCalculator(calc.Calculator):
     
         return Vmin
     
+    
     def calculate(self, atoms = None,  *args, **kwargs):
         """
         COMPUTES ENERGY AND FORCES IN eV and eV/ ANGSTROM
@@ -74,27 +79,45 @@ class ToyModelCalculator(calc.Calculator):
 
         # Position in ANGSTROM converted in BOHR, np.array with shape = (2, 3)
         coords = atoms.get_positions() * units.A_TO_BOHR
-
+        
         # Get the relative coordinate
         rel_coord =  (coords[0,:] - coords[1,:])
         
-        # Get the radial distance
-        r         = np.sqrt(rel_coord.dot(rel_coord))
-        
-        # Get the energy in HARTREE subtrating the minimum of the Morse + crystal field potential
-        energy = self.H2_shift + self.H2_D * (1. - np.exp(-self.H2_a * (r - self.H2_re)))**2 + self.E * (coords[0,0] - coords[1,0]) - self.minimum()
-        
-        # Derivative with respect the radial distance
-        diff_V_r = 2. * self.H2_a * self.H2_D * (1. - np.exp(-self.H2_a * (r - self.H2_re))) * np.exp(-self.H2_a * (r - self.H2_re))
-        
-        # Get the forces for the first particle in HARTREE /BOHR
-        force[0,:]  = - diff_V_r * (coords[0,:] - coords[1,:]) /r
-        force[0,0] += - self.E
-        
-        # Get the forces for the second particle in HARTREE /BOHR
-        force[1,:] = - force[0,:]
-        
-        # CONVERT from HARTREE, HARTREE /BOHR in -> eV, eV /ANGSTROM
-        self.results = {"energy": energy * 2. * units.RY_TO_EV, "forces": force * 2. * units.RY_TO_EV /units.BOHR_TO_ANGSTROM}
+        if self.model == 'rotating':
+            # Get the radial distance
+            r         = np.sqrt(rel_coord.dot(rel_coord))
+
+            # Get the energy in HARTREE subtrating the minimum of the Morse + crystal field potential
+            energy = self.H2_shift + self.H2_D * (1. - np.exp(-self.H2_a * (r - self.H2_re)))**2 + self.E * (coords[0,0] - coords[1,0]) - self.minimum()
+
+            # Derivative with respect the radial distance
+            diff_V_r = 2. * self.H2_a * self.H2_D * (1. - np.exp(-self.H2_a * (r - self.H2_re))) * np.exp(-self.H2_a * (r - self.H2_re))
+
+            # Get the forces for the first particle in HARTREE /BOHR
+            force[0,:]  = - diff_V_r * (coords[0,:] - coords[1,:]) /r
+            force[0,0] += - self.E
+
+            # Get the forces for the second particle in HARTREE /BOHR
+            force[1,:] = - force[0,:]
+
+            # CONVERT from HARTREE, HARTREE /BOHR in -> eV, eV /ANGSTROM
+            self.results = {"energy": energy * 2. * units.RY_TO_EV, "forces": force * 2. * units.RY_TO_EV /units.BOHR_TO_ANGSTROM}
+            
+        else:
+            
+            # Get the energy in HARTREE 
+            energy = 0.5 * self.k_harm * ((rel_coord[0] - self.H2_re)**2 + rel_coord[1]**2 + rel_coord[2]**2)
+
+            # Get the forces for the first particle in HARTREE /BOHR
+            force[0,0]  = - self.k_harm * (rel_coord[0] - self.H2_re)
+            force[0,1:] = - self.k_harm * rel_coord[1:]
+            
+            # Get the forces for the second particle in HARTREE /BOHR
+            force[1,:] = - force[0,:]
+            
+
+            # CONVERT from HARTREE, HARTREE /BOHR in -> eV, eV /ANGSTROM
+            self.results = {"energy": energy * 2. * units.RY_TO_EV, "forces": force * 2. * units.RY_TO_EV /units.BOHR_TO_ANGSTROM}
+            
     
         return self.results
