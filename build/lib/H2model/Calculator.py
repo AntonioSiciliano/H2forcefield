@@ -15,7 +15,7 @@ class ToyModelCalculator(calc.Calculator):
         """
         Computes the potential and forces for an H2 molecule:
         
-            V(r_1, r_2) = H2_shift + H2_D * {1 - exp[- H2_a * (r - H2_re)]}^2 + E * (x_1 - x_2),
+            V(r) = H2_shift + H2_D * {1 - exp[- H2_a * (r - H2_re)]}^2 + E * (x_1 - x_2),
         
             where r = |r_1 - r_2|.
         """
@@ -40,6 +40,7 @@ class ToyModelCalculator(calc.Calculator):
         # The equilibrium bond lenght  in BOHR
         self.H2_re    =  1.21606669
         
+        # The harmnonic elastic constant in HARTREE /BOHR^2
         self.k_harm = 2 * (self.H2_a**2) * self.H2_D
         
         # Crystal field in HARTREE /BOHR
@@ -85,16 +86,16 @@ class ToyModelCalculator(calc.Calculator):
         
         if self.model == 'rotating':
             # Get the radial distance
-            r         = np.sqrt(rel_coord.dot(rel_coord))
+            r = np.sqrt(rel_coord.dot(rel_coord))
 
             # Get the energy in HARTREE subtrating the minimum of the Morse + crystal field potential
-            energy = self.H2_shift + self.H2_D * (1. - np.exp(-self.H2_a * (r - self.H2_re)))**2 + self.E * (coords[0,0] - coords[1,0]) - self.minimum()
+            energy = self.H2_shift + self.H2_D * (1. - np.exp(-self.H2_a * (r - self.H2_re)))**2 + self.E * rel_coord[0] - self.minimum()
 
             # Derivative with respect the radial distance
             diff_V_r = 2. * self.H2_a * self.H2_D * (1. - np.exp(-self.H2_a * (r - self.H2_re))) * np.exp(-self.H2_a * (r - self.H2_re))
 
             # Get the forces for the first particle in HARTREE /BOHR
-            force[0,:]  = - diff_V_r * (coords[0,:] - coords[1,:]) /r
+            force[0,:]  = - diff_V_r * rel_coord /r
             force[0,0] += - self.E
 
             # Get the forces for the second particle in HARTREE /BOHR
@@ -110,7 +111,8 @@ class ToyModelCalculator(calc.Calculator):
 
             # Get the forces for the first particle in HARTREE /BOHR
             force[0,0]  = - self.k_harm * (rel_coord[0] - self.H2_re)
-            force[0,1:] = - self.k_harm * rel_coord[1:]
+            force[0,1] = - self.k_harm * rel_coord[1]
+            force[0,2] = - self.k_harm * rel_coord[2]
             
             # Get the forces for the second particle in HARTREE /BOHR
             force[1,:] = - force[0,:]
