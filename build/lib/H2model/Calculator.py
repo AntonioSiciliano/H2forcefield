@@ -95,22 +95,18 @@ class ToyModelCalculator(calc.Calculator):
             diff_V_r = 2. * self.H2_a * self.H2_D * (1. - np.exp(-self.H2_a * (r - self.H2_re))) * np.exp(-self.H2_a * (r - self.H2_re))
 
             # Get the forces for the first particle in HARTREE /BOHR
-            force[0,:]  = - diff_V_r * rel_coord /r
+            force[0,:]  = - diff_V_r * rel_coord[:] /r
             force[0,0] += - self.E
 
             # Get the forces for the second particle in HARTREE /BOHR
             force[1,:] = - force[0,:]
-
-            # CONVERT from HARTREE, HARTREE /BOHR in -> eV, eV /ANGSTROM
-            self.results = {"energy": energy * 2. * units.RY_TO_EV, "forces": force * 2. * units.RY_TO_EV /units.BOHR_TO_ANGSTROM}
             
         else:
-            
             # Get the energy in HARTREE 
             energy = 0.5 * self.k_harm * ((rel_coord[0] - self.H2_re)**2 + rel_coord[1]**2 + rel_coord[2]**2)
 
             # Get the forces for the first particle in HARTREE /BOHR
-            force[0,0]  = - self.k_harm * (rel_coord[0] - self.H2_re)
+            force[0,0] = - self.k_harm * (rel_coord[0] - self.H2_re)
             force[0,1] = - self.k_harm * rel_coord[1]
             force[0,2] = - self.k_harm * rel_coord[2]
             
@@ -118,8 +114,8 @@ class ToyModelCalculator(calc.Calculator):
             force[1,:] = - force[0,:]
             
 
-            # CONVERT from HARTREE, HARTREE /BOHR in -> eV, eV /ANGSTROM
-            self.results = {"energy": energy * 2. * units.RY_TO_EV, "forces": force * 2. * units.RY_TO_EV /units.BOHR_TO_ANGSTROM}
+        # CONVERT from HARTREE, HARTREE /BOHR in -> eV, eV /ANGSTROM
+        self.results = {"energy": energy * 2. * units.RY_TO_EV, "forces": force * 2. * units.RY_TO_EV /units.BOHR_TO_ANGSTROM}
             
     
         return self.results
