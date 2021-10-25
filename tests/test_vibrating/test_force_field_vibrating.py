@@ -40,8 +40,8 @@ def test_forces():
         initial_pos[0,0,:] = np.array([-re /2., 0., 0.])
         initial_pos[0,1,:] = np.array([+re /2., 0., 0.])
     else:
-        initial_pos[0,0,:] = np.array([+re /2., 0., 0.])
-        initial_pos[0,1,:] = np.array([-re /2., 0., 0.])
+        initial_pos[0,0,:] = np.array([-re /2., 0., 0.])
+        initial_pos[0,1,:] = np.array([+re /2., 0., 0.])
 
     # GENERATE THE ENSEMBLE
     NLensemble.generate_nonlinear_ensemble(1, evenodd = False)

@@ -103,10 +103,10 @@ class ToyModelCalculator(calc.Calculator):
             
         else:
             # Get the energy in HARTREE 
-            energy = 0.5 * self.k_harm * ((rel_coord[0] - self.H2_re)**2 + rel_coord[1]**2 + rel_coord[2]**2)
+            energy = 0.5 * self.k_harm * ((rel_coord[0] + self.H2_re)**2 + rel_coord[1]**2 + rel_coord[2]**2)
 
             # Get the forces for the first particle in HARTREE /BOHR
-            force[0,0] = - self.k_harm * (rel_coord[0] - self.H2_re)
+            force[0,0] = - self.k_harm * (rel_coord[0] + self.H2_re)
             force[0,1] = - self.k_harm * rel_coord[1]
             force[0,2] = - self.k_harm * rel_coord[2]
             
