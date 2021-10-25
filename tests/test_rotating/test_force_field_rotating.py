@@ -25,7 +25,7 @@ def test_forces():
 
     # Set the force field
     ff_calculator = H2model.Calculator.ToyModelCalculator()
-    ff_calculator.E = 0.0
+    ff_calculator.E = 0.01
     ff_calculator.model = 'rotating'
     re = ff_calculator.H2_re * conv.AU_TO_ANGSTROM
 
