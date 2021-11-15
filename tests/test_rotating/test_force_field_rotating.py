@@ -28,21 +28,34 @@ def test_forces():
     ff_calculator.E = 0.0
     ff_calculator.model = 'rotating'
     re = ff_calculator.H2_re * conv.AU_TO_ANGSTROM
+    k_harm =  (2. * ff_calculator.H2_a**2 * ff_calculator.H2_D) * conv.HA_TO_RY
 
-    # Set the initial guess for the FC constant
-    Cart_dyn = CC.Phonons.Phonons('initial_H2_dyn',1)
+    struct = CC.Structure.Structure(2)
+
+    # We must setup the masses (in Ha)
+    struct.masses = {"H" : 918.58996499058958}
+
+    struct.coords = np.array([[-re/2., 0., 0.], [+re/2., 0., 0.]])
+
+    struct.unit_cell = 3. * np.eye(3)
+
+    struct.has_unit_cell = True
+
+    Cart_dyn = CC.Phonons.Phonons(struct)
+
+    Cart_dyn.dynmats[0] = k_harm * np.eye(6)
+    
+    w, pols = Cart_dyn.DiagonalizeSupercell()
+    if np.any(w * conv.RY_TO_mEV < 1.):
+        raise ValueError('The FC matrix is not positive definite!')
 
     # The NonLinear Ensemble
     T0 = 0.
     NLensemble = NLE.NonLinearEnsemble(Cart_dyn, T0, Cart_dyn.GetSupercell())
 
     initial_pos = np.zeros((1,2,3))
-    if ff_calculator.model == 'rotating':
-        initial_pos[0,0,:] = np.array([-re /2., 0., 0.])
-        initial_pos[0,1,:] = np.array([+re /2., 0., 0.])
-    else:
-        initial_pos[0,0,:] = np.array([+re /2., 0., 0.])
-        initial_pos[0,1,:] = np.array([-re /2., 0., 0.])
+    initial_pos[0,0,:] = np.array([-re /2., 0., 0.])
+    initial_pos[0,1,:] = np.array([+re /2., 0., 0.])
 
     # GENERATE THE ENSEMBLE
     NLensemble.generate_nonlinear_ensemble(1, evenodd = False)
@@ -52,10 +65,8 @@ def test_forces():
     NLensemble.u_disps *= 0.
 
     # In angstrom
-#     x_range = np.linspace(0., re/5., 100) 
     x_range = np.linspace(-re/5., re/5., 200) 
     delta_x = x_range[1] - x_range[0]
-
 
     directory = 'Results'
     if os.path.isdir(directory):
@@ -76,7 +87,7 @@ def test_forces():
                 r = NLensemble.xats[0,0] - NLensemble.xats[0,1]
 
                 # Compute FORCES AND ENERGIES
-                NLensemble.compute_ensemble(ff_calculator, compute_stress = False)
+                NLensemble.compute_ensemble(ff_calculator, compute_stress = False, verbose = False)
 
                 energy.append(NLensemble.energies[0])
                 force.append(NLensemble.forces[0,atom,coord])

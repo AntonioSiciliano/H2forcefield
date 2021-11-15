@@ -44,7 +44,7 @@ class ToyModelCalculator(calc.Calculator):
         self.k_harm = 2 * (self.H2_a**2) * self.H2_D
         
         # Crystal field in HARTREE /BOHR
-        self.E = np.linspace(0, 0.06, 15)[1]
+        self.E = 0.001
         
     def minimum(self):
         """
