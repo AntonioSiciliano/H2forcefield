@@ -24,7 +24,11 @@ class ToyModelCalculator(calc.Calculator):
         # Setup what properties the calculator can load
         self.implemented_properties = ["energy", "forces"]
         
+        # Chose the model
         self.model = 'rotating'
+        
+        # Chose if we want a com fixed or not
+        self.fix_com = False
         
         # Parameters of the Morse potential in ATOMIC UNITS
         
@@ -45,6 +49,9 @@ class ToyModelCalculator(calc.Calculator):
         
         # Crystal field in HARTREE /BOHR
         self.E = np.linspace(0, 0.06, 15)[1]
+        
+        # The spring constant for the com
+        self.k_com = 5. * self.k_harm
         
     def minimum(self):
         """
@@ -84,13 +91,16 @@ class ToyModelCalculator(calc.Calculator):
         # Get the relative coordinate
         rel_coord =  (coords[0,:] - coords[1,:])
         
+        # Get the com cooridnate (same masses)
+        com_coord = 0.5 *  (coords[0,:] + coords[1,:])
+        
         if self.model == 'rotating':
             # Get the radial distance
             r = np.sqrt(rel_coord.dot(rel_coord))
 
             # Get the energy in HARTREE subtrating the minimum of the Morse + crystal field potential
             energy = self.H2_shift + self.H2_D * (1. - np.exp(-self.H2_a * (r - self.H2_re)))**2 + self.E * rel_coord[0] - self.minimum()
-
+            
             # Derivative with respect the radial distance
             diff_V_r = 2. * self.H2_a * self.H2_D * (1. - np.exp(-self.H2_a * (r - self.H2_re))) * np.exp(-self.H2_a * (r - self.H2_re))
 
@@ -112,6 +122,12 @@ class ToyModelCalculator(calc.Calculator):
             
             # Get the forces for the second particle in HARTREE /BOHR
             force[1,:] = - force[0,:]
+            
+                    
+        if self.fix_com:
+            energy     += 0.5 * self.k_com * com_coord.dot(com_coord)
+            force[0,:] += - 0.5 * self.k_com * com_coord[:]
+            force[1,:] += - 0.5 * self.k_com * com_coord[:]
             
 
         # CONVERT from HARTREE, HARTREE /BOHR in -> eV, eV /ANGSTROM
