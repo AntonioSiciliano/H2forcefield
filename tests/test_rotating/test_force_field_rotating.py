@@ -30,9 +30,31 @@ def test_forces():
     ff_calculator.fix_com = True
     ff_calculator.model = 'rotating'
     re = ff_calculator.H2_re * conv.AU_TO_ANGSTROM
+    k_harm =  (2. * ff_calculator.H2_a**2 * ff_calculator.H2_D) * conv.HA_TO_RY
 
+<<<<<<< HEAD
     # Set the initial guess for the FC constant
     Cart_dyn = extra.get_dyn(ff_calculator.model)
+=======
+    struct = CC.Structure.Structure(2)
+
+    # We must setup the masses (in Ha)
+    struct.masses = {"H" : 918.58996499058958}
+
+    struct.coords = np.array([[-re/2., 0., 0.], [+re/2., 0., 0.]])
+
+    struct.unit_cell = 3. * np.eye(3)
+
+    struct.has_unit_cell = True
+
+    Cart_dyn = CC.Phonons.Phonons(struct)
+
+    Cart_dyn.dynmats[0] = k_harm * np.eye(6)
+    
+    w, pols = Cart_dyn.DiagonalizeSupercell()
+    if np.any(w * conv.RY_TO_mEV < 1.):
+        raise ValueError('The FC matrix is not positive definite!')
+>>>>>>> 6bc199488770a39bc07951bee19ac761e439822d
 
     # The NonLinear Ensemble
     T0 = 0.
@@ -52,7 +74,6 @@ def test_forces():
     # In angstrom
     x_range = np.linspace(-re/5., re/5., 200) 
     delta_x = x_range[1] - x_range[0]
-
 
     directory = 'Results'
     if os.path.isdir(directory):

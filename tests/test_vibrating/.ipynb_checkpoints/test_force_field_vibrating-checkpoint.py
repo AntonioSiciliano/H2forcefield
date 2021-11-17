@@ -13,7 +13,10 @@ import nonlinear_sscha
 import nonlinear_sscha.NonLinearStructure as NLS
 import nonlinear_sscha.NonLinearEnsemble as NLE
 import nonlinear_sscha.Conversion as conv
+<<<<<<< HEAD
 import nonlinear_sscha.Extra as extra
+=======
+>>>>>>> 6bc199488770a39bc07951bee19ac761e439822d
 
 import shutil
 
@@ -24,6 +27,7 @@ def test_forces():
     total_path = os.path.dirname(os.path.abspath(__file__))
     os.chdir(total_path)
 
+<<<<<<< HEAD
     # Set the force field
     ff_calculator = H2model.Calculator.ToyModelCalculator()
     ff_calculator.model = 'vibrating'
@@ -32,6 +36,32 @@ def test_forces():
 
     # Set the initial guess for the FC constant
     Cart_dyn = extra.get_dyn(ff_calculator.model)
+=======
+   # Set the force field
+    ff_calculator = H2model.Calculator.ToyModelCalculator()
+    ff_calculator.model = 'vibrating'
+    re = ff_calculator.H2_re * conv.AU_TO_ANGSTROM
+    k_harm =  (2. * ff_calculator.H2_a**2 * ff_calculator.H2_D) * conv.HA_TO_RY
+
+    struct = CC.Structure.Structure(2)
+
+    # We must setup the masses (in Ha)
+    struct.masses = {"H" : 918.58996499058958}
+
+    struct.coords = np.array([[-re/2., 0., 0.], [+re/2., 0., 0.]])
+
+    struct.unit_cell = 3. * np.eye(3)
+
+    struct.has_unit_cell = True
+
+    Cart_dyn = CC.Phonons.Phonons(struct)
+
+    Cart_dyn.dynmats[0] = k_harm * np.eye(6)
+    
+    w, pols = Cart_dyn.DiagonalizeSupercell()
+    if np.any(w * conv.RY_TO_mEV < 1.):
+        raise ValueError('The FC matrix is not positive definite!')
+>>>>>>> 6bc199488770a39bc07951bee19ac761e439822d
 
     # The NonLinear Ensemble
     T0 = 0.
@@ -49,7 +79,10 @@ def test_forces():
     NLensemble.u_disps *= 0.
 
     # In angstrom
+<<<<<<< HEAD
 #     x_range = np.linspace(0., re/5., 100) 
+=======
+>>>>>>> 6bc199488770a39bc07951bee19ac761e439822d
     x_range = np.linspace(-re/5., re/5., 200) 
     delta_x = x_range[1] - x_range[0]
 
