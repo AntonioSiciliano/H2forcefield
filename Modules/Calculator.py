@@ -51,7 +51,7 @@ class ToyModelCalculator(calc.Calculator):
         self.E = 0.001
         
         # The spring constant for the com
-        self.k_com = 5. * self.k_harm
+        self.k_com = 1. * self.k_harm
         
     def minimum(self):
         """

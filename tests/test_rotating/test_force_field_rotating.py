@@ -32,10 +32,9 @@ def test_forces():
     re = ff_calculator.H2_re * conv.AU_TO_ANGSTROM
     k_harm =  (2. * ff_calculator.H2_a**2 * ff_calculator.H2_D) * conv.HA_TO_RY
 
-<<<<<<< HEAD
     # Set the initial guess for the FC constant
     Cart_dyn = extra.get_dyn(ff_calculator.model)
-=======
+
     struct = CC.Structure.Structure(2)
 
     # We must setup the masses (in Ha)
@@ -54,7 +53,7 @@ def test_forces():
     w, pols = Cart_dyn.DiagonalizeSupercell()
     if np.any(w * conv.RY_TO_mEV < 1.):
         raise ValueError('The FC matrix is not positive definite!')
->>>>>>> 6bc199488770a39bc07951bee19ac761e439822d
+
 
     # The NonLinear Ensemble
     T0 = 0.
