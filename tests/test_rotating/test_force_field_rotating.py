@@ -26,8 +26,8 @@ def test_forces():
 
     # Set the force field
     ff_calculator = H2model.Calculator.ToyModelCalculator()
-    ff_calculator.E = 0.001
-    ff_calculator.fix_com = True
+    ff_calculator.E = 0.01
+    ff_calculator.fix_com = False
     ff_calculator.model = 'rotating'
     re = ff_calculator.H2_re * conv.AU_TO_ANGSTROM
     k_harm =  (2. * ff_calculator.H2_a**2 * ff_calculator.H2_D) * conv.HA_TO_RY
@@ -54,22 +54,7 @@ def test_forces():
     if np.any(w * conv.RY_TO_mEV < 1.):
         raise ValueError('The FC matrix is not positive definite!')
 
-
-    # The NonLinear Ensemble
-    T0 = 0.
-    NLensemble = NLE.NonLinearEnsemble(Cart_dyn, T0, Cart_dyn.GetSupercell())
-
-    initial_pos = np.zeros((1,2,3))
-    initial_pos[0,0,:] = np.array([-re /2., 0., 0.])
-    initial_pos[0,1,:] = np.array([+re /2., 0., 0.])
-
-    # GENERATE THE ENSEMBLE
-    NLensemble.generate_nonlinear_ensemble(1, evenodd = False)
-    NLensemble.xats = np.copy(initial_pos)
-    NLensemble.structures[0].coords = np.copy(NLensemble.xats[0])
-
-    NLensemble.u_disps *= 0.
-
+    initial_pos = np.copy(struct.coords)
     # In angstrom
     x_range = np.linspace(-re/5., re/5., 200) 
     delta_x = x_range[1] - x_range[0]
@@ -87,28 +72,26 @@ def test_forces():
             force  = []
 
             for i in range(len(x_range)):
-                NLensemble.xats = np.copy(initial_pos)
-                NLensemble.xats[0,atom,coord]   = np.copy(initial_pos[0,atom,coord] + x_range[i])
-                NLensemble.structures[0].coords = np.copy(NLensemble.xats[0])
+                Cart_dyn.structure.coords = np.copy(initial_pos)
+                Cart_dyn.structure.coords[atom,coord] = np.copy(initial_pos[atom,coord] + x_range[i])
+                
+                results = ff_calculator.calculate(atoms = Cart_dyn.structure.get_ase_atoms())
 
-                # Compute FORCES AND ENERGIES
-                NLensemble.compute_ensemble(ff_calculator, compute_stress = False, verbose = False)
-
-                energy.append(NLensemble.energies[0])
-                force.append(NLensemble.forces[0,atom,coord])
+                energy.append(results['energy'] )
+                force.append(results['forces'][atom,coord] )
 
             fig, ax = plt.subplots(2, 1, figsize = (10,10))
 
             force_num = -np.gradient(np.asarray(energy), delta_x)
 
-            y = initial_pos[0,atom,coord] + x_range
-            ax[0].plot(y, np.asarray(energy) * conv.RY_TO_mEV, 'ro', label='Energy (meV)')
+            y = initial_pos[atom,coord] + x_range
+            ax[0].plot(y, np.asarray(energy) * 1000, 'ro', label='Energy (meV)')
             ax[1].set_ylabel('Energy (meV)')
             ax[0].legend()
 
             ax[1].plot(y, force_num, 'ro', label = 'Numerical')
             ax[1].plot(y, force, 'bx', label = 'Exact')
-            ax[1].set_ylabel('Forces (Ry/Angstrom)')
+            ax[1].set_ylabel('Forces (eV/Angstrom)')
             ax[1].set_xlabel('position at = {} coord = {} (Angstrom)'.format(atom, coord))
             ax[1].legend()
 
